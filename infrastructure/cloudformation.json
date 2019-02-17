@@ -1,0 +1,390 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Anaconda Enterprise Training",
+    "Parameters": {
+        "Region": {
+            "Type": "String",
+            "Default": "us-east-1"
+        }
+    },
+    "Mappings": {
+        "SubnetConfig": {
+            "VPC": {
+                "CIDR": "10.0.0.0/20"
+            },
+            "SubnetA": {
+                "CIDR": "10.0.0.0/24",
+                "AZ": "us-east-1a"
+            }
+        },
+        "Ec2InstanceConfig": {
+            "Metadata": {
+                "InstanceName": "anaconda-enterprise"
+            }
+        },
+        "UserConfig": {
+            "Login": {
+                "Name": "iot-user",
+                "Pass": "ca-lab-user"
+            }
+        }
+    },
+    "Resources": {
+        "Ec2Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "SubnetA",
+                        "AZ"
+                    ]
+                },
+                "IamInstanceProfile": {
+                    "Ref": "Ec2InstanceProfile"
+                },
+                "ImageId": "ami-0022db86fb8c57055",
+                "InstanceType": "t2.micro",
+                "KeyName": {
+                    "Ref": "AWS::AccountId"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "Ec2SecurityGroup"
+                    }
+                ],
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeType": "io1",
+                            "Iops": "3000",
+                            "DeleteOnTermination": "false",
+                            "VolumeSize": "500"
+                        }
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "SubnetA"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::FindInMap": [
+                                "Ec2InstanceConfig",
+                                "Metadata",
+                                "InstanceName"
+                            ]
+                        }
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "yum -y install git\n",
+                                "mkdir /home/ec2-user/iot\n",
+                                "virtualenv /home/ec2-user/iot\n",
+                                "mkdir /home/ec2-user/iot/certs\n",
+                                "wget https://www.amazontrust.com/repository/AmazonRootCA1.pem -O /home/ec2-user/iot/certs/root.pem\n",
+                                "source /home/ec2-user/iot/bin/activate\n",
+                                "pip install AWSIoTPythonSDK\n",
+                                "deactivate\n",
+                                "git clone https://github.com/lrakai/aws-iot-device-sim.git /home/ec2-user/iot/aws-iot-device-sim\n",
+                                "echo '#!/bin/bash\n",
+                                "source /home/ec2-user/iot/bin/activate\n",
+                                "python /home/ec2-user/iot/aws-iot-device-sim/scripts/fireSprinkler.py \"${@:1}\"\n",
+                                "deactivate' > /home/ec2-user/iot/fireSprinkler.sh\n",
+                                "chmod ugo+x /home/ec2-user/iot/fireSprinkler.sh\n",
+                                "echo '#!/bin/bash\n",
+                                "source /home/ec2-user/iot/bin/activate\n",
+                                "python /home/ec2-user/iot/aws-iot-device-sim/scripts/airConditioning.py \"${@:1}\"\n",
+                                "deactivate' > /home/ec2-user/iot/airConditioning.sh\n",
+                                "chmod ugo+x /home/ec2-user/iot/airConditioning.sh\n",
+                                "chown -R ec2-user:ec2-user /home/ec2-user\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "Ec2Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "anaconda-enterprise",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": {
+                                "Effect": "Deny",
+                                "Action": "iam:*",
+                                "Resource": "*"
+                            }
+                        }
+                    }
+                ],
+                "RoleName": "anaconda-enterprise-role"
+            }
+        },
+        "Ec2InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "Ec2Role"
+                    }
+                ]
+            }
+        },
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "VPC",
+                        "CIDR"
+                    ]
+                },
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "Tags": [
+                    {
+                        "Key": "Lab",
+                        "Value": {
+                            "Ref": "AWS::StackName"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "Lab VPC"
+                    }
+                ]
+            }
+        },
+        "SubnetA": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "MapPublicIpOnLaunch": true,
+                "AvailabilityZone": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "SubnetA",
+                        "AZ"
+                    ]
+                },
+                "CidrBlock": {
+                    "Fn::FindInMap": [
+                        "SubnetConfig",
+                        "SubnetA",
+                        "CIDR"
+                    ]
+                }
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway"
+        },
+        "InternetGatewayAttach": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                }
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "SubnetARouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "SubnetA"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "Ec2SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Anaconda Enterprise",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "443",
+                        "ToPort": "443",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "4242",
+                        "ToPort": "4242",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "3009",
+                        "ToPort": "3009",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "32009",
+                        "ToPort": "32009",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "61008",
+                        "ToPort": "61010",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "61022",
+                        "ToPort": "61024",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "Group": {
+            "Type": "AWS::IAM::Group",
+            "Properties": {
+                "GroupName": "Students",
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "students-policy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Deny",
+                                    "Action": [
+                                        "ec2:ModifyInstanceAttribute",
+                                        "ec2:*Reserved*",
+                                        "ec2:*Spot*",
+                                        "dynamodb:*Reserved*",
+                                        "rds:*Reserved*",
+                                        "elasticache:*Reserved*",
+                                        "redshift:*Reserved*",
+                                        "aws-marketplace:*"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "elasticloadbalancing:Describe*",
+                                        "cloudwatch:Describe*",
+                                        "cloudwatch:Get*",
+                                        "cloudwatch:List*",
+                                        "logs:Describe*",
+                                        "logs:FilterLogEvents",
+                                        "logs:GetLogEvents",
+                                        "logs:ListTagsLogGroup",
+                                        "logs:TestMetricFilter",
+                                        "logs:PutSubscriptionFilter",
+                                        "cloudformation:DescribeStacks",
+                                        "cloudformation:DescribeStackEvents",
+                                        "cloudformation:DescribeStackResource",
+                                        "cloudformation:DescribeStackResources",
+                                        "cloudformation:Get*",
+                                        "cloudformation:List*",
+                                        "ec2:Describe*"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "User": {
+            "Type": "AWS::IAM::User",
+            "Properties": {
+                "LoginProfile": {
+                    "Password": {
+                        "Fn::FindInMap": [
+                            "UserConfig",
+                            "Login",
+                            "Pass"
+                        ]
+                    }
+                },
+                "Path": "/",
+                "Groups": [
+                    "Students"
+                ],
+                "UserName": {
+                    "Fn::FindInMap": [
+                        "UserConfig",
+                        "Login",
+                        "Name"
+                    ]
+                }
+            }
+        }
+    }
+}
