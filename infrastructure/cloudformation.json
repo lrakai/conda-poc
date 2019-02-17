@@ -85,26 +85,7 @@
                             "",
                             [
                                 "#!/bin/bash -xe\n",
-                                "yum -y install git\n",
-                                "mkdir /home/ec2-user/iot\n",
-                                "virtualenv /home/ec2-user/iot\n",
-                                "mkdir /home/ec2-user/iot/certs\n",
-                                "wget https://www.amazontrust.com/repository/AmazonRootCA1.pem -O /home/ec2-user/iot/certs/root.pem\n",
-                                "source /home/ec2-user/iot/bin/activate\n",
-                                "pip install AWSIoTPythonSDK\n",
-                                "deactivate\n",
-                                "git clone https://github.com/lrakai/aws-iot-device-sim.git /home/ec2-user/iot/aws-iot-device-sim\n",
-                                "echo '#!/bin/bash\n",
-                                "source /home/ec2-user/iot/bin/activate\n",
-                                "python /home/ec2-user/iot/aws-iot-device-sim/scripts/fireSprinkler.py \"${@:1}\"\n",
-                                "deactivate' > /home/ec2-user/iot/fireSprinkler.sh\n",
-                                "chmod ugo+x /home/ec2-user/iot/fireSprinkler.sh\n",
-                                "echo '#!/bin/bash\n",
-                                "source /home/ec2-user/iot/bin/activate\n",
-                                "python /home/ec2-user/iot/aws-iot-device-sim/scripts/airConditioning.py \"${@:1}\"\n",
-                                "deactivate' > /home/ec2-user/iot/airConditioning.sh\n",
-                                "chmod ugo+x /home/ec2-user/iot/airConditioning.sh\n",
-                                "chown -R ec2-user:ec2-user /home/ec2-user\n"
+                                "yum -y install git\n"
                             ]
                         ]
                     }
