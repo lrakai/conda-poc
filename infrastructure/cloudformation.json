@@ -59,7 +59,7 @@
                         "Ebs": {
                             "VolumeType": "io1",
                             "Iops": "3000",
-                            "DeleteOnTermination": "false",
+                            "DeleteOnTermination": "true",
                             "VolumeSize": "500"
                         }
                     }
