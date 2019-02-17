@@ -44,7 +44,7 @@
                     "Ref": "Ec2InstanceProfile"
                 },
                 "ImageId": "ami-0022db86fb8c57055",
-                "InstanceType": "t2.micro",
+                "InstanceType": "m5d.4xlarge",
                 "KeyName": {
                     "Ref": "AWS::AccountId"
                 },
