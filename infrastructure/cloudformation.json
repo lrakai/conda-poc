@@ -19,13 +19,13 @@
         },
         "Ec2InstanceConfig": {
             "Metadata": {
-                "InstanceName": "anaconda-enterprise"
+                "InstanceName": "anaconda-enterprise (Username: centos)"
             }
         },
         "UserConfig": {
             "Login": {
-                "Name": "iot-user",
-                "Pass": "ca-lab-user"
+                "Name": "student",
+                "Pass": "password"
             }
         }
     },
