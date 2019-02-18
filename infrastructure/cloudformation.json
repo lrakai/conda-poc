@@ -5,6 +5,11 @@
         "Region": {
             "Type": "String",
             "Default": "us-east-1"
+        },
+        "PolicyTags": {
+            "Description" : "Custom enforcement policy tag",
+            "Type": "String",
+            "Default" : "ec2.anaconda"
         }
     },
     "Mappings": {
