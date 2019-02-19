@@ -7,9 +7,9 @@
             "Default": "us-east-1"
         },
         "PolicyTags": {
-            "Description" : "Custom enforcement policy tag",
+            "Description": "Custom enforcement policy tag",
             "Type": "String",
-            "Default" : "ec2.anaconda,ebs.anaconda"
+            "Default": "ec2.anaconda,ebs.anaconda"
         }
     },
     "Mappings": {
@@ -35,6 +35,67 @@
         }
     },
     "Resources": {
+        "PrivateHostedZone": {
+            "Type": "AWS::Route53::HostedZone",
+            "Properties": {
+                "HostedZoneConfig": {
+                    "Comment": "Hosted zone for anaconda.ca-lab.training"
+                },
+                "Name": "anaconda.ca-lab.training.",
+                "VPCs": [
+                    {
+                        "VPCId": {
+                            "Ref": "TestVpc"
+                        },
+                        "VPCRegion": {
+                            "Ref": "Region"
+                        }
+                    }
+                ],
+                "HostedZoneTags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Lab Training Hosted Zone"
+                    }
+                ]
+            }
+        },
+        "PrivateRecordSetGroup": {
+            "Type": "AWS::Route53::RecordSetGroup",
+            "DependsOn": "PrivateHostedZone",
+            "Properties": {
+                "HostedZoneName": "anaconda.ca-lab.training.",
+                "Comment": "LDAP server DNS name",
+                "RecordSets": [
+                    {
+                        "Name": "anaconda.ca-lab.training.",
+                        "Type": "A",
+                        "ResourceRecords": [
+                            {
+                                "Fn::GetAtt": [
+                                    "Ec2Instance",
+                                    "PrivateIp"
+                                ]
+                            }
+                        ],
+                        "TTL": "900"
+                    },
+                    {
+                        "Name": "*.anaconda.ca-lab.training.",
+                        "Type": "A",
+                        "ResourceRecords": [
+                            {
+                                "Fn::GetAtt": [
+                                    "Ec2Instance",
+                                    "PrivateIp"
+                                ]
+                            }
+                        ],
+                        "TTL": "900"
+                    }
+                ]
+            }
+        },
         "Ec2Instance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
