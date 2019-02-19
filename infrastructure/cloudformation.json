@@ -15,7 +15,8 @@
     "Mappings": {
         "SubnetConfig": {
             "VPC": {
-                "CIDR": "10.0.0.0/20"
+                "CIDR": "10.0.0.0/20",
+                "Region": "us-east-1"
             },
             "SubnetA": {
                 "CIDR": "10.0.0.0/24",
@@ -45,10 +46,14 @@
                 "VPCs": [
                     {
                         "VPCId": {
-                            "Ref": "TestVpc"
+                            "Ref": "VPC"
                         },
                         "VPCRegion": {
-                            "Ref": "Region"
+                            "Fn::FindInMap": [
+                                "SubnetConfig",
+                                "VPC",
+                                "Region"
+                            ]
                         }
                     }
                 ],
