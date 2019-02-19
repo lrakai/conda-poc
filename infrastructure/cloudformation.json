@@ -9,7 +9,7 @@
         "PolicyTags": {
             "Description" : "Custom enforcement policy tag",
             "Type": "String",
-            "Default" : "ec2.anaconda"
+            "Default" : "ec2.anaconda,ebs.anaconda"
         }
     },
     "Mappings": {
