@@ -138,6 +138,7 @@
                 "SubnetId": {
                     "Ref": "SubnetA"
                 },
+                "PrivateIpAddress" : "10.0.0.212",
                 "Tags": [
                     {
                         "Key": "Name",
