@@ -138,7 +138,7 @@
                 "SubnetId": {
                     "Ref": "SubnetA"
                 },
-                "PrivateIpAddress" : "10.0.0.212",
+                "PrivateIpAddress": "10.0.0.212",
                 "Tags": [
                     {
                         "Key": "Name",
@@ -186,36 +186,30 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
-                                    "Version": "2012-10-17",
-                                    "Id": "certbot-dns-route53 sample policy",
-                                    "Statement": [
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "route53:ListHostedZones",
+                                        "route53:GetChange"
+                                    ],
+                                    "Resource": [
+                                        "*"
+                                    ]
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "route53:ChangeResourceRecordSets"
+                                    ],
+                                    "Resource": [
                                         {
-                                            "Effect": "Allow",
-                                            "Action": [
-                                                "route53:ListHostedZones",
-                                                "route53:GetChange"
-                                            ],
-                                            "Resource": [
-                                                "*"
-                                            ]
-                                        },
-                                        {
-                                            "Effect": "Allow",
-                                            "Action": [
-                                                "route53:ChangeResourceRecordSets"
-                                            ],
-                                            "Resource": [
-                                                {
-                                                    "Fn::Join": [
-                                                        "",
-                                                        [
-                                                            "arn:aws:route53:::hostedzone/",
-                                                            {
-                                                                "Ref": "PrivateHostedZone"
-                                                            }
-                                                        ]
-                                                    ]
-                                                }
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "arn:aws:route53:::hostedzone/",
+                                                    {
+                                                        "Ref": "PrivateHostedZone"
+                                                    }
+                                                ]
                                             ]
                                         }
                                     ]
